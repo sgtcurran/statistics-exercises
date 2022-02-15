@@ -9,6 +9,8 @@ import viz
 
 # %%
 #excercise 1 
+# How likely is it that you roll doubles when rolling two dice?
+
 n_trials1 = nrows1 = 10_000
 n_dice1 = ncols1 = 2
 
@@ -21,7 +23,8 @@ print('How likely is it that you roll doubles when rolling two dice?', prob)
 
 #%%
 #excercise 2
-
+# If you flip 8 coins, what is the probability of getting exactly 3
+# heads? What is the probability of getting more than 3 heads?
 coin_trials = nrows2 = 10_000
 n_coin = ncols2 = 8
 #heads=0
@@ -154,3 +157,21 @@ simulations1 = np.random.choice(['food truck','no foodruck'], p=[.7,.3], size=(1
 # excercise 8
 # if 23 people are in the same room, what are the odds that two of them share a birthday? What if it's 20 people? 40?
 
+birthday_sim = np.random.randint(1, 366, size=(10_000, 23))
+birthday_sim = pd.DataFrame(birthday_sim)
+birthday_sim
+birthday_23 = (birthday_sim.apply(lambda x: x.nunique(), axis=1) < 23).mean()
+print('odds that two of them share a birthday?', birthday_23)
+
+birthday_sim20 = np.random.randint(1, 366, size=(10_000, 20))
+birthday_sim20 = pd.DataFrame(birthday_sim20)
+birthday_sim20
+birthday_20 = (birthday_sim20.apply(lambda x: x.nunique(), axis=1) < 20).mean()
+print('odds that 2 of them share a birthday?', birthday_20)
+
+birthday_sim40 = np.random.randint(1, 366, size=(10_000,50))
+birthday_sim40 = pd.DataFrame(birthday_sim40)
+birthday_sim40
+birthday_40 = (birthday_sim40.apply(lambda x: x.nunique(), axis=1) < 50).mean()
+print('odds that 2 of them share a birthday?', birthday_40)
+# %%
