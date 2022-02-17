@@ -2,10 +2,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
-import pandas as pd
 import seaborn as sb
+import pandas as pd
 import viz # curriculum viz example code
-
+from tabulate import tabulate
 np.random.seed(123)
 #%%
 # exercise 1
@@ -56,18 +56,35 @@ print('What grade point average is required to be in the top 5%''of the graduati
 bottem_fifteen = stats.norm(normal_div_mean,std).ppf(0.15)
 print('What GPA constitutes the bottom 15%''of the class?', bottem_fifteen)
 
-third_decile = stats.norm(normal_div_mean,std).cdf(3.5)
+third_decile = stats.norm(normal_div_mean,std).cdf(3.5) #theoretical 
 print('what is the range of the third decile', third_decile)
 
-what_percentile = (np.random.normal(normal_div_mean,std, 10_000)< 3.5).mean()
+what_percentile1 = stats.norm(normal_div_mean,std).cdf(3.5)
+print('If I have a GPA of 3.5, what percentile am I in? theoretical', what_percentile1)
+what_percentile = (np.random.normal(normal_div_mean,std, 10_000)< 3.5).mean() #simulation 
 print('If I have a GPA of 3.5, what percentile am I in?', what_percentile)
 
+
+#%%
+# scatter plot for quantiles
 student_avg = np.random.normal(normal_div_mean,std, size=(10_000))
-student_sim = pd.DataFrame(student_avg, columns=['gpa'])
-student_sim['quantiles'] = pd.qcut(student_sim['gpa'], 4, labels=False)
-student_sim.quantiles.value_counts().sort_index()
-ax = student_sim.plot.scatter(x='quantiles', y='gpa', rot=0)
-student_sim
+student_sim1 = pd.DataFrame(student_avg, columns=['gpa'])
+student_sim1['quantiles'] = pd.qcut(student_sim1['gpa'], 4, labels=False)
+student_sim1.quantiles.value_counts().sort_index()
+print(tabulate(student_sim1, headers = 'keys', tablefmt = 'psql'))
+ax = student_sim1.plot.scatter(x='quantiles', y='gpa', rot=0)
+#%%
+# scatter plot for deciles
+student_avg1 = np.random.normal(normal_div_mean,std, size=(10_000))
+student_bar = pd.DataFrame(student_avg1, columns=['gpa'])
+student_bar['decile'] = pd.qcut(student_bar['gpa'], 10, labels=False)
+student_bar.decile.value_counts().sort_index()
+print(tabulate(student_bar, headers = 'keys', tablefmt = 'psql'))
+ax1 = student_bar.plot.scatter(x='decile', y='gpa', rot=0)
+
+
+
+
 # %%
 # exercise 3
 
@@ -78,10 +95,14 @@ avg_click = .02
 n_trials = 4326
 avergae_vis_click = n_trials * avg_click
 
-clicks = stats.poisson(avergae_vis_click).sf(96)
-clicks
-print('How likely is it that this many people or more click through?', clicks)
 
+clicks = stats.binom(n_trials,avg_click) # theoretical
+click1 = clicks.sf(96)
+click1
+print('How likely is it that this many people or more click through?', click1)
+
+click_test = (clicks.rvs(n_trials)>= 97).mean() #simulation
+print('How likely is it that this many people or more click through? simulation', click_test)
 
 # %%
 # exercise 4
@@ -94,17 +115,18 @@ number_correct = .01
 n_sim = nrows1 = 10_000
 n_test = ncol1 = 60
 
-sim_test = (np.random.choice([0,1], (n_sim, n_test), p = [0.99, 0.01]))
+
+sim_test = (np.random.choice([0,1], (n_sim, n_test), p = [0.99, 0.01]))#simulation 
 prob_60 = pd.DataFrame(sim_test).round()
 test_60 = prob_60 > number_correct
 ds_odds = (test_60.sum(axis=1)>0).mean()
 ds_odds
 
-print('What is the probability that at least one of your first 60 answers is correct?', ds_odds)
+print('Simulation: What is the probability that at least one of your first 60 answers is correct?', ds_odds)
 
-sim_test1 = stats.binom(n_test, number_correct).sf(0)
+sim_test1 = stats.binom(n_test, number_correct).sf(0)#theoretical
 sim_test1
-print('Predicted: What is the probability that at least one of your first 60 answers is correct?', sim_test1)
+print('Theoratical: What is the probability that at least one of your first 60 answers is correct?', sim_test1)
 # %%
 # exercise 5
 # The codeup staff tends to get upset when the student break area is 
@@ -118,19 +140,44 @@ print('Predicted: What is the probability that at least one of your first 60 ans
 probability = .03
 total_students = n_cols = round((3 * 22)*.90)
 sim = n_rows = 10_000
-
+#theoretical
 clean = stats.binom(total_students, probability).sf(0)
 print('How likely is it that the break area gets cleaned up each day?', clean)
-
-clean_without_two_days = stats.binom(total_students*2, probability).pmf(0)
-print('How likely is it that it goes two days without getting cleaned up?', clean_without_two_days)
-
-clean_without_five_days = stats.binom((total_students *5), probability).pmf(0)
-print('All week?', clean_without_five_days)
-
+#simulation
 student_sim = (np.random.choice([0,1], (n_rows, n_cols), p = [0.97, 0.03])).reshape(n_rows,n_cols)
 prob_student = pd.DataFrame(student_sim)
 prob_clean = prob_student > probability
 cleaned = (prob_clean.sum(axis=1)>0).mean()
 cleaned
+print('How likely is it that the break area gets cleaned up each day? simulation', cleaned)
+#theoretical
+clean_without_two_days = stats.binom(total_students*2, probability).pmf(0)
+print('How likely is it that it goes two days without getting cleaned up?', clean_without_two_days)
+#simulation
+student_sim_two_days = (np.random.choice([0,1], (n_rows, n_cols), p = [0.97, 0.03])).reshape(n_rows,n_cols)
+prob_student_two_days = pd.DataFrame(student_sim_two_days)
+prob_clean_two_days = prob_student > (probability)
+cleaned_two_days = (prob_clean_two_days.sum(axis=1)>2).mean()
+print('How likely is it that it goes two days without getting cleaned up? simulation', cleaned_two_days)
+#theoretical
+clean_without_five_days = stats.binom((total_students *5), probability).pmf(0)
+print('All week?', clean_without_five_days)
+#simulation 
+student_sim_five_days = (np.random.choice([0,1], (n_rows, n_cols), p = [0.97, 0.03])).reshape(n_rows,n_cols)
+prob_student_five_days = pd.DataFrame(student_sim_five_days)
+prob_clean_five_days = student_sim_five_days > (probability)
+cleaned_five_days = (prob_clean_five_days.sum(axis=1)>5).mean()
+print('All week? simulation', cleaned_five_days)
+
 # %%
+#excercise 6
+
+# You want to get lunch at La Panaderia, but notice that the line is usually very long at 
+# lunchtime. After several weeks of careful observation, you notice that the average 
+# number of people in line when your lunch break starts is normally distributed with 
+# a mean of 15 and standard deviation of 3. If it takes 2 minutes for each person to 
+# order, and 10 minutes from ordering to getting your food, what is the likelihood that 
+# you have at least 15 minutes left to eat your food before you have to go back to class? 
+# Assume you have one hour for lunch, and ignore travel time to and from La Panaderia.
+
+
